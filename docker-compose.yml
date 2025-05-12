@@ -1,0 +1,62 @@
+services:
+  django:
+    image: kram3ko/airport
+    ports:
+      - "8001:8000"
+    env_file:
+      - .env
+    volumes:
+      # no sync for production
+      - airport_media:/files/media
+      - airport_static:/files/static
+    depends_on:
+      air_db:
+        condition: service_healthy
+  nginx:
+    image: nginx:alpine
+    container_name: airport-nginx
+    volumes:
+      - ./docker/nginx/sites-available/:/etc/nginx/conf.d:ro/
+      - ./airport_media:/files/media
+      - ./airport_static:/files/static
+    ports:
+      - "80:80"
+    depends_on:
+      - django
+
+  air_db:
+    image: postgres:alpine
+    container_name: airport-db-test
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+    volumes:
+      - air_db:$PGDATA
+  pgadmin4:
+    image: dpage/pgadmin4
+    container_name: pgadmin4_container
+    ports:
+      - "8888:80"
+    env_file:
+      - .env
+    depends_on:
+      air_db:
+        condition: service_healthy
+    volumes:
+      - pgadmin-data:$PGADMIN
+
+volumes:
+  air_db:
+    name: air_db
+  airport_media:
+    name: airport_media
+  airport_static:
+    name: airport_static
+  pgadmin-data:
+    name: pgadmin_data_volume

@@ -1,0 +1,8 @@
+[project]
+name = "test-airport-docker-api"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.13"
+dependencies = [
+    "environs>=14.1.1",
+]
